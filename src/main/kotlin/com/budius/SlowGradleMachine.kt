@@ -11,7 +11,6 @@ import java.io.FileReader
 import java.io.FileWriter
 import java.time.Duration
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
@@ -38,11 +37,22 @@ abstract class BuildListenerService : BuildService<BuildListenerService.Params>,
         private const val KEY_LAST = "last-wait-time"
         private const val KEY_SINCE = "awaiting-since"
 
-        private val DT_FORMAT = DateTimeFormatter.ISO_DATE_TIME
-        private val DU_FORMAT = DateTimeFormatter.ISO_LOCAL_TIME
+        private val DT_FORMAT = DateTimeFormatter.ofPattern("dd-LLL-yyyy HH'h' mm'm'")
 
-        private fun formatDuration(d: Long): String {
-            return DU_FORMAT.format(Duration.ofMillis(d).addTo(LocalTime.of(0, 0)))
+        private fun formatDuration(ms: Long): String {
+            val d = Duration.ofMillis(ms)
+
+            val hours = d.toHours().toString().padStart(2, '0')
+            val minutes = d.toMinutesPart().toString().padStart(2, '0')
+            val seconds = d.toSecondsPart().toString().padStart(2, '0')
+
+            return if (hours != "00") {
+                "$hours hours $minutes minutes $seconds seconds"
+            } else if (minutes != "00") {
+                "$minutes minutes $seconds seconds"
+            } else {
+                "$seconds seconds"
+            }
         }
     }
 
@@ -53,6 +63,9 @@ abstract class BuildListenerService : BuildService<BuildListenerService.Params>,
     private val startTime = System.currentTimeMillis()
 
     init {
+
+        DateTimeFormatter.ofPattern("dd LLL yyyy HH'h'mm'm'")
+
         val file = parameters.file
         file.parentFile?.mkdirs()
 
